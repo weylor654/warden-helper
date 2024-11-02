@@ -53,7 +53,7 @@ class MainWindow(QWidget):
                 color: white;  /* Цвет текста при наведении */
             }
             QPushButton:pressed {
-                background-color: #3b3b3b;  /* Темный цвет при нажатии */
+                background-color: #0073a1;  /* Темный цвет при нажатии (темно-голубой) */
                 color: white;  /* Цвет текста при нажатии */
             }
         """)

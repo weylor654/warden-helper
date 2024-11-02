@@ -46,7 +46,7 @@ class MyBar(QWidget):
 
         # Темный стиль заголовка окна
         self.setStyleSheet(""" 
-            background-color: #1c1e22;  /* Темно-серый цвет заголовка */
+            background-color: #272727;  /* Темно-серый цвет заголовка */
             color: white;
             font-weight: bold;
         """)
@@ -100,7 +100,7 @@ class MyBar(QWidget):
         """Возвращает стиль кнопки."""
         return """
             QPushButton {
-                background-color: #1c1e22;
+                background-color: #272727;
                 border: none;
                 color: white;
             }
