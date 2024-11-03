@@ -79,12 +79,6 @@ class MyBar(QWidget):
         self.btn_min.setStyleSheet(self.button_style())
         self.btn_min.clicked.connect(self.parent.showMinimized)
 
-        self.btn_max = QPushButton()
-        self.btn_max.setFixedSize(35, 35)
-        self.btn_max.setIcon(QIcon('data/squre.png'))
-        self.btn_max.setStyleSheet(self.button_style())
-        self.btn_max.clicked.connect(self.toggle_maximized)
-
         self.btn_close = QPushButton()
         self.btn_close.setFixedSize(35, 35)
         self.btn_close.setIcon(QIcon('data/krest.png'))
@@ -93,7 +87,6 @@ class MyBar(QWidget):
 
         self.layout.addWidget(self.btn_pin)
         self.layout.addWidget(self.btn_min)
-        self.layout.addWidget(self.btn_max)
         self.layout.addWidget(self.btn_close)
 
     def button_style(self):

@@ -74,7 +74,7 @@ class MainWindow(QWidget):
         self.show()  # Обновляем окно
 
     def open_full_version(self):
-        from warden_helper_ui import run_table_version
+        from GUI_test import run_table_version
         run_table_version()
 
     def open_abridged_version(self):

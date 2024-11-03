@@ -1,7 +1,8 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QVBoxLayout, QWidget, QPushButton, QGridLayout, QFrame
+from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QVBoxLayout, QWidget, QGridLayout, QFrame
 from PyQt5.QtCore import Qt
-
+from PyQt5.QtGui import QIcon
+from my_bar import MyBar
 # Импортируем данные и функции
 from warden_helper_logic import article_names_to_codes, article_codes_to_penalties, articles, modifiers, penalty_duration
 
@@ -9,11 +10,12 @@ class WardenHelper(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        # Настройка главного окна
-        self.setWindowTitle("Warden Helper")
+        # Устанавливаем флаги для окна без системного заголовка
+        self.setWindowFlags(Qt.FramelessWindowHint)
         self.setStyleSheet("background-color: #1B1B1F; color: #EFEBD8;")
-        self.setGeometry(100, 100, 1000, 900)  # Устанавливаем размер окна
-        self.selected_cells = {}  # Словарь для хранения выбранных статей по главам
+        self.setGeometry(100, 100, 1000, 800)
+
+        self.selected_cells = {}
         self.modifier_selected = set()
         self.modifier_labels = {}
 
@@ -21,14 +23,18 @@ class WardenHelper(QMainWindow):
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
         main_layout = QVBoxLayout(main_widget)
-        main_layout.setSpacing(0)  # Убираем промежутки между элементами
-        main_layout.setContentsMargins(0, 0, 0, 0)  # Убираем отступы по краям
+        main_layout.setSpacing(0)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Добавляем кастомный заголовок
+        self.my_bar = MyBar(self)
+        main_layout.addWidget(self.my_bar)
 
         # Создаем фрейм для таблиц и добавляем его в макет
         tables_frame = QFrame()
-        tables_layout = QGridLayout(tables_frame)
-        tables_layout.setSpacing(0)  # Убираем промежутки между ячейками
-        tables_layout.setContentsMargins(0, 0, 0, 0)  # Убираем отступы по краям
+        tables_layout = QVBoxLayout(tables_frame)
+        tables_layout.setSpacing(0)
+        tables_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(tables_frame)
 
         # Создаем таблицу статей
@@ -38,13 +44,31 @@ class WardenHelper(QMainWindow):
         self.create_modifier_frame(tables_layout)
 
         # Добавляем поле для вердикта
+        verdict_frame = QFrame()
+        verdict_layout = QVBoxLayout(verdict_frame)
+        verdict_layout.setContentsMargins(0, 0, 0, 0)
+
         self.verdict_label = QLabel("Вердикт:", self)
         self.verdict_label.setStyleSheet("font: 18pt 'Verdana'; color: #d0d0d0;")
         self.verdict_label.setAlignment(Qt.AlignLeft)
-        main_layout.addWidget(self.verdict_label)
+        verdict_layout.addWidget(self.verdict_label)
+
+        # Добавляем красную линию под вердиктом
+        red_line = QFrame()
+        red_line.setStyleSheet("background-color: red;")
+        red_line.setFixedHeight(2)
+        verdict_layout.addWidget(red_line)
+
+        main_layout.addWidget(verdict_frame)
 
     def create_article_frame(self, layout):
         # Настройка таблицы статей
+        frame = QFrame()
+        grid_layout = QGridLayout(frame)
+        grid_layout.setSpacing(0)  # Убираем промежутки между ячейками
+        grid_layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(frame)
+
         columns = ["XX1", "XX2", "XX3", "XX4", "XX5", "XX6"]
         chapters = ["11X", "12X", "13X", "14X", "21X", "22X", "31X", "32X", "41X", "42X", "43X"]
         colors = {
@@ -53,104 +77,116 @@ class WardenHelper(QMainWindow):
         }
 
         # Заголовок для строки "Глава"
-        chapter_label = QLabel("Г", self)  # Сокращаем заголовок для уменьшения ширины
+        chapter_label = QLabel("Глава", self)
         chapter_label.setStyleSheet("background-color: #333; color: white; font: bold 10pt 'Verdana';")
         chapter_label.setAlignment(Qt.AlignCenter)
-        chapter_label.setFixedSize(40, 50)  # Делаем первый столбец минимальным
-        layout.addWidget(chapter_label, 0, 0)
+        chapter_label.setFixedSize(100, 40)  # Ширина выровнена по слову "Глава"
+        grid_layout.addWidget(chapter_label, 0, 0)
 
         # Создаем заголовки столбцов
         for i, col in enumerate(columns):
             label = QLabel(col, self)
             label.setStyleSheet(f"background-color: {colors[col]}; color: white; font: bold 10pt 'Verdana';")
             label.setAlignment(Qt.AlignCenter)
-            label.setFixedSize(150, 50)  # Делаем заголовки больше
-            layout.addWidget(label, 0, i + 1)
+            label.setFixedSize(214, 40)  # Широкие заголовки, уменьшенная высота
+            grid_layout.addWidget(label, 0, i + 1)
 
         # Создаем ячейки статей
         for i, chapter in enumerate(chapters):
             chapter_label = QLabel(chapter, self)
-            chapter_label.setStyleSheet("background-color: #333; color: white; font: bold 10pt 'Verdana';")
+            chapter_label.setStyleSheet("background-color: #333; color: white; font: 10pt 'Verdana';")
             chapter_label.setAlignment(Qt.AlignCenter)
-            chapter_label.setFixedSize(40, 80)  # Делаем ячейки для глав маленькими по ширине
-            layout.addWidget(chapter_label, i + 1, 0)
+            chapter_label.setFixedSize(100, 60)  # Ширина для глав
+            grid_layout.addWidget(chapter_label, i + 1, 0)
 
             for j, col in enumerate(columns):
                 article = articles.get(chapter, [""])[j] if j < len(articles.get(chapter, [])) else ""
                 label = QLabel(article, self)
                 label.setAlignment(Qt.AlignCenter)
-                label.setFrameShape(QFrame.NoFrame)  # Убираем рамки ячеек
-                label.setFixedSize(150, 80)  # Делаем ячейки для статей больше
-                label.setWordWrap(True)  # Включаем перенос текста
+                label.setFixedSize(214, 60)  # Широкие ячейки, уменьшенная высота
+                label.setWordWrap(True)
 
-                # Устанавливаем базовый стиль с цветом столбца
-                label.setStyleSheet(f"background-color: {colors[col]}; color: #EFEBD8; font: 9pt 'Verdana';")
+                # Устанавливаем стиль с курсивным и жирным текстом
+                label.setStyleSheet(f"background-color: {colors[col]}; color: #EFEBD8; font: bold italic 9pt 'Verdana';")
                 label.original_color = colors[col]  # Сохраняем исходный цвет
+                label.is_xx6 = (col == "XX6")  # Флаг для столбца XX6
 
-                if article:  # Если в ячейке есть текст, делаем её кликабельной и добавляем события
+                if article:  # Если в ячейке есть текст, добавляем события
                     label.mousePressEvent = lambda event, lbl=label, ch=chapter: self.toggle_selection(lbl, ch)
                     label.enterEvent = lambda event, lbl=label: self.on_hover_enter(lbl)
                     label.leaveEvent = lambda event, lbl=label: self.on_hover_leave(lbl)
 
-                layout.addWidget(label, i + 1, j + 1)
+                grid_layout.addWidget(label, i + 1, j + 1)
 
     def create_modifier_frame(self, layout):
-        # Создаем строку с модификаторами, которая начинается под "Глава" и заканчивается под "XX6"
-        modifier_frame = QFrame()
-        modifier_layout = QGridLayout(modifier_frame)
-        modifier_layout.setSpacing(0)  # Убираем промежутки между кнопками
-        modifier_layout.setContentsMargins(0, 0, 0, 0)  # Убираем отступы по краям
-        layout.addWidget(modifier_frame, len(articles) + 1, 0, 1, 7)  # Устанавливаем модификаторы на всю ширину таблицы
+        # Настройка таблицы модификаторов
+        frame = QFrame()
+        grid_layout = QGridLayout(frame)
+        grid_layout.setSpacing(0)  # Убираем промежутки между ячейками
+        grid_layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(frame)
 
         # Добавляем метки модификаторов
         for i, (mod_name, _) in enumerate(modifiers.items()):
-            button = QPushButton(mod_name, self)
-            button.setStyleSheet("background-color: #444444; color: #EFEBD8; font: bold 10pt 'Verdana';")
-            button.setFixedSize(150, 80)  # Увеличиваем высоту кнопок модификаторов
-            modifier_layout.addWidget(button, 0, i)  # Располагаем кнопки в строку
-            button.clicked.connect(lambda checked, name=mod_name: self.on_modifier_click(name))
-            self.modifier_labels[mod_name] = button
+            label = QLabel(mod_name, self)
+            label.setAlignment(Qt.AlignCenter)
+            label.setFixedSize(173, 80)  # Уменьшаем длину и увеличиваем высоту ячеек модификаторов
+            label.setWordWrap(True)
+            label.setStyleSheet("background-color: #444444; color: #EFEBD8; font: bold italic 9pt 'Verdana';")
+            label.original_color = "#444444"  # Сохраняем исходный цвет
+
+            # Добавляем события для модификаторов
+            label.mousePressEvent = lambda event, lbl=label: self.toggle_modifier(lbl)
+            label.enterEvent = lambda event, lbl=label: self.on_hover_enter(lbl)
+            label.leaveEvent = lambda event, lbl=label: self.on_hover_leave(lbl)
+
+            grid_layout.addWidget(label, 0, i)
 
     def on_hover_enter(self, label):
-        # Если ячейка не выбрана, затемняем цвет при наведении
-        if label not in self.selected_cells.values():
-            darker_color = self.darken_color(label.original_color, 0.2)
-            label.setStyleSheet(f"background-color: {darker_color}; color: #EFEBD8; font: 9pt 'Verdana';")
+        # Эффект при наведении: подсветка для XX6, затемнение для остальных
+        if label not in self.selected_cells.values() and label not in self.modifier_selected:
+            if getattr(label, "is_xx6", False):  # Проверяем, является ли ячейка из столбца XX6
+                highlight_color = self.brighten_color(label.original_color, 0.2)
+                label.setStyleSheet(f"background-color: {highlight_color}; color: #EFEBD8; font: bold italic 9pt 'Verdana';")
+            else:
+                darker_color = self.darken_color(label.original_color, 0.2)
+                label.setStyleSheet(f"background-color: {darker_color}; color: #EFEBD8; font: bold italic 9pt 'Verdana';")
 
     def on_hover_leave(self, label):
         # Возвращаем цвет, если ячейка не выбрана, иначе оставляем стиль выбранной ячейки
-        if label not in self.selected_cells.values():
-            label.setStyleSheet(f"background-color: {label.original_color}; color: #EFEBD8; font: 9pt 'Verdana';")
+        if label not in self.selected_cells.values() and label not in self.modifier_selected:
+            label.setStyleSheet(f"background-color: {label.original_color}; color: #EFEBD8; font: bold italic 9pt 'Verdana';")
         else:
             label.setStyleSheet(f"background-color: {self.darken_color(label.original_color, 0.2)}; "
-                                "color: #EFEBD8; font: 9pt 'Verdana'; border: 2px solid #00BFFF;")
+                                "color: #EFEBD8; font: bold italic 9pt 'Verdana'; border: 2px solid #00BFFF;")
 
     def toggle_selection(self, label, chapter):
         # Если статья уже выбрана, снимаем выделение
         if label in self.selected_cells.values():
-            label.setStyleSheet(f"background-color: {label.original_color}; color: #EFEBD8; font: 9pt 'Verdana';")
+            label.setStyleSheet(f"background-color: {label.original_color}; color: #EFEBD8; font: bold italic 9pt 'Verdana';")
             self.selected_cells.pop(chapter, None)
         else:
             # Убираем выделение с предыдущей выбранной статьи в этой главе
             if chapter in self.selected_cells:
                 previous_label = self.selected_cells[chapter]
-                previous_label.setStyleSheet(f"background-color: {previous_label.original_color}; color: #EFEBD8; font: 9pt 'Verdana';")
+                previous_label.setStyleSheet(f"background-color: {previous_label.original_color}; color: #EFEBD8; font: bold italic 9pt 'Verdana';")
 
-            # Устанавливаем новое выделение с голубыми границами
             label.setStyleSheet(f"background-color: {self.darken_color(label.original_color, 0.2)}; "
-                                "color: #EFEBD8; font: 9pt 'Verdana'; border: 2px solid #00BFFF;")
+                                "color: #EFEBD8; font: bold italic 9pt 'Verdana'; border: 2px solid #00BFFF;")
             self.selected_cells[chapter] = label
 
         self.update_verdict_field()
 
-    def on_modifier_click(self, mod_name):
-        button = self.modifier_labels[mod_name]
-        if mod_name in self.modifier_selected:
-            self.modifier_selected.remove(mod_name)
-            button.setStyleSheet("background-color: #444444; color: #EFEBD8;")
+    def toggle_modifier(self, label):
+        # Если модификатор уже выбран, снимаем выделение
+        if label in self.modifier_selected:
+            label.setStyleSheet(f"background-color: {label.original_color}; color: #EFEBD8; font: bold italic 9pt 'Verdana';")
+            self.modifier_selected.remove(label)
         else:
-            self.modifier_selected.add(mod_name)
-            button.setStyleSheet("background-color: #509ee3; color: #EFEBD8;")
+            label.setStyleSheet(f"background-color: {self.darken_color(label.original_color, 0.2)}; "
+                                "color: #EFEBD8; font: bold italic 9pt 'Verdana'; border: 2px solid #00BFFF;")
+            self.modifier_selected.add(label)
+
         self.update_verdict_field()
 
     def update_verdict_field(self):
@@ -183,7 +219,7 @@ class WardenHelper(QMainWindow):
 
         if self.modifier_selected:
             for mod in self.modifier_selected:
-                total_minutes += modifiers.get(mod, 0)
+                total_minutes += modifiers.get(mod.text(), 0)
 
         if has_death_penalty:
             verdict.append("Высшая мера наказания")
@@ -200,9 +236,36 @@ class WardenHelper(QMainWindow):
         darkened_rgb = [max(int(c * (1 - percent)), 0) for c in rgb]
         return f'#{darkened_rgb[0]:02x}{darkened_rgb[1]:02x}{darkened_rgb[2]:02x}'
 
+    def brighten_color(self, hex_color, percent):
+        """Утилита для подсветки цвета."""
+        rgb = [int(hex_color[i:i + 2], 16) for i in (1, 3, 5)]
+        brightened_rgb = [min(int(c + (255 - c) * percent), 255) for c in rgb]
+        return f'#{brightened_rgb[0]:02x}{brightened_rgb[1]:02x}{brightened_rgb[2]:02x}'
+    
+    def toggle_always_on_top(self):
+        """Переключение окна между обычным состоянием и 'всегда сверху'."""
+        self.always_on_top = not getattr(self, "always_on_top", False)
+
+        if self.always_on_top:
+            self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+            self.my_bar.btn_pin.setIcon(QIcon('data/unpin.png'))  # Изменяем иконку на закрепленную
+        else:
+            self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)
+            self.my_bar.btn_pin.setIcon(QIcon('data/pin.png'))  # Возвращаем иконку на обычную
+
+        self.show()  # Обновляем окно
+        
+# Функция для запуска полной версии таблицы
+def run_table_version():
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication(sys.argv)
+
+    main_window = WardenHelper()
+    main_window.show()
+
+    if not QApplication.instance().thread().isRunning():
+        sys.exit(app.exec_())
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = WardenHelper()
-    window.show()
-    sys.exit(app.exec_())
+    run_table_version()
