@@ -180,12 +180,16 @@ sections = {
 # Функция для разделения строки на раздел, главу и статью
 def parse_violation(violation_str):
     try:
+        # Проверяем, чтобы строка состояла не более чем из трех символов
+        if len(violation_str) > 3:
+            return None
         section = int(violation_str[0])  # Первый символ - раздел
         chapter = int(violation_str[1])  # Второй символ - глава
         article = int(violation_str[2])  # Третий символ - статья
         return section, chapter, article
     except (IndexError, ValueError):
         return None
+
 
 # Функция для расчета наказания по статьям
 def calculate_penalties(violations, selected_modifiers):
@@ -195,7 +199,7 @@ def calculate_penalties(violations, selected_modifiers):
     total_modifiers = 0
 
     for violation_str in violations:
-        result = parse_violation(violation_str[:3])
+        result = parse_violation(violation_str)
         if result:
             section, chapter, article = result
             if section in sections and chapter in sections[section] and article in sections[section][chapter]:
@@ -231,6 +235,6 @@ def calculate_penalties(violations, selected_modifiers):
         total_penalty = 0
 
     if total_penalty >= 75:
-        return f"{total_penalty} минут заменяются на пожизненное заключение"
+        return f"пожизненное заключение"
     else:
         return f"{total_penalty} минут"

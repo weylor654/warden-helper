@@ -1,5 +1,8 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QLineEdit, QLabel, QPushButton, QComboBox, QVBoxLayout, QFrame, QTextEdit
+from PyQt5.QtWidgets import (
+    QApplication, QWidget, QLineEdit, QLabel, QPushButton,
+    QVBoxLayout, QFrame, QTextEdit, QToolButton, QMenu, QSizePolicy 
+)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPalette, QColor, QIcon
 from my_bar import MyBar, resource_path
@@ -21,7 +24,7 @@ class MainWindow(QWidget):
         super(MainWindow, self).__init__()
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setWindowIcon(QIcon(resource_path("data/warden_helper_icon.png"))) # иконка приложения
-        self.setMinimumSize(360, 280)  # Измененные размеры окна
+        self.setMinimumSize(400, 280)  # Измененные размеры окна
         self.always_on_top = False
 
         # Установка цветовой схемы
@@ -54,31 +57,52 @@ class MainWindow(QWidget):
             "background-color: #2E2E2E; color: white; font-size: 16px; border: 1px solid #3A3A3A; padding: 10px; border-radius: 10px;"
         )
         self.content_layout.addWidget(self.article_entry)
-
+        
         self.content_layout.addSpacing(20)
+        
+        # Создание контекстного меню для выбора модификаторов
+        self.modifier_menu_label = QLabel("Модификаторы:", self)
+        self.modifier_menu_label.setStyleSheet("color: white; font-size: 16px;")
+        self.content_layout.addWidget(self.modifier_menu_label)
+        self.modifier_menu = QMenu(self)
+        for modifier in MODIFIER_OPTIONS:
+            action = self.modifier_menu.addAction(modifier)
+            action.triggered.connect(lambda checked, text=modifier: self.add_modifier(text))  # Передаем текст модификатора
 
-        # Поле для ввода модификаторов
-        self.modifier_label = QLabel("Модификаторы:", self)
-        self.modifier_label.setStyleSheet("color: white; font-size: 16px;")
-        self.content_layout.addWidget(self.modifier_label)
+        # Установка цвета текста в меню
+        self.modifier_menu.setStyleSheet("QMenu { background-color: #2E2E2E; } QMenu::item { color: white; } QMenu::item:selected { background-color: #509ee3; }")
 
-        # Дропбокс для выбора модификаторов
-        self.modifier_autocomplete = QComboBox(self)
-        self.modifier_autocomplete.addItems(MODIFIER_OPTIONS)
+        # Создание кнопки выбора модификаторов
+        self.modifier_autocomplete = QToolButton(self)
+        self.modifier_autocomplete.setText("Выберите модификатор")
         self.modifier_autocomplete.setStyleSheet(
-            "background-color: #2E2E2E; color: white; font-size: 16px; padding: 10px; border: 1px solid #3A3A3A; border-radius: 10px;"
-        )
-        self.content_layout.addWidget(self.modifier_autocomplete)
+            """
+            QToolButton {
+                background-color: #2E2E2E;
+                color: white;
+                font-size: 16px;
+                border: 1px solid #3A3A3A;
+                padding: 10px;  /* Добавляем отступ справа для сдвига стрелочки */
+                border-radius: 10px;
+                qproperty-iconSize: 20px;  /* Размер стрелочки */
+            }
+            QToolButton::menu-indicator {
+                subcontrol-origin: content;  /* Расположение стрелочки внутри кнопки */
+                subcontrol-position: right center;  /* Стрелочка по центру вертикали справа */
+                width: 16px;  /* Ширина стрелочки */
+                height: 16px;  /* Высота стрелочки */
+            }
+            """
+        )    
+        self.modifier_autocomplete.setMenu(self.modifier_menu)  # Установка меню для кнопки
+        self.modifier_autocomplete.setPopupMode(QToolButton.InstantPopup)  # Установка режима всплывающего меню
 
-        # Кнопка для добавления модификатора
-        self.add_modifier_button = QPushButton("Добавить модификатор", self)
-        self.add_modifier_button.setStyleSheet(
-            "QPushButton { background-color: #272727; color: white; font-size: 16px; border: none; padding: 10px; border-radius: 10px; }"
-            "QPushButton:hover { background-color: #509ee3; color: white; }"
-            "QPushButton:pressed { background-color: #1E6FA7; color: white; }"
-        )
-        self.add_modifier_button.clicked.connect(self.add_modifier)
-        self.content_layout.addWidget(self.add_modifier_button)
+        # Установка кнопки в layout
+        self.content_layout.addWidget(self.modifier_autocomplete, alignment=Qt.AlignCenter)
+
+        # Установка политики размера для кнопки
+        self.modifier_autocomplete.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.modifier_autocomplete.setMinimumWidth(400)  # Минимальная ширина кнопки
 
         # Кнопка для удаления модификатора
         self.remove_modifier_button = QPushButton("Удалить модификатор", self)
@@ -137,8 +161,7 @@ class MainWindow(QWidget):
 
         self.show()  # Обновляем окно
 
-    def add_modifier(self):
-        selected_modifier = self.modifier_autocomplete.currentText()
+    def add_modifier(self, selected_modifier):
         current_text = self.modifier_entry.toPlainText().strip()
         if current_text:
             # Нумеруем модификаторы
@@ -147,6 +170,7 @@ class MainWindow(QWidget):
             self.modifier_entry.append(f"{new_modifier_number}. {selected_modifier}")
         else:
             self.modifier_entry.setPlainText(f"1. {selected_modifier}")
+
 
     def remove_modifier(self):
         current_text = self.modifier_entry.toPlainText().strip()
@@ -164,7 +188,8 @@ class MainWindow(QWidget):
     def calculate_verdict(self):
         # Получаем статьи из поля ввода и удаляем пустые строки
         articles = [article for article in self.article_entry.text().strip().split() if article]
-
+        if len(articles) > 3:
+            return None
         # Проверяем, есть ли статьи
         if not articles:
             self.verdict_label.setText("Вердикт: Введите хотя бы одну статью")
@@ -176,8 +201,6 @@ class MainWindow(QWidget):
         # Передаем список статей и модификаторов в функцию calculate_penalties
         verdict = calculate_penalties(articles, modifiers)
         self.verdict_label.setText(f"Вердикт: {verdict}")
-
-
 
 
 def run_abridged_version():
