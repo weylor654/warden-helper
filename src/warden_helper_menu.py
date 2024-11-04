@@ -8,27 +8,28 @@ class MainWindow(QWidget):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.setWindowFlags(Qt.FramelessWindowHint)  # Окно без системного заголовка
-        self.setWindowIcon(QIcon(resource_path("data/warden_helper_icon.png"))) # иконка приложения
+        self.setWindowIcon(QIcon(resource_path("data/warden_helper_icon.png")))  # иконка приложения
         self.setMinimumSize(300, 150)  # минимальные размеры окна
         self.always_on_top = False  # Изначально окно не закреплено
 
         # Основной интерфейс
         self.layout = QVBoxLayout()
-        self.layout.setContentsMargins(0, 0, 0, 0)  # Убираем отступы
-        self.layout.setSpacing(0)  # Убираем промежуток между элементами
-        self.setLayout(self.layout)  # Устанавливаем layout для окна
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0) 
+        self.setLayout(self.layout)  # layout для окна
 
-        # Создаем и добавляем панель MyBar
-        self.my_bar = MyBar(self)  # Добавляем кастомную панель
+        # панель MyBar
+        self.my_bar = MyBar(self)  # кастомная панель
+        self.my_bar.setFixedHeight(30)  # Высота заголовка
         self.layout.addWidget(self.my_bar)
 
         # Создание кнопок
         self.full_version_button = self.create_button("Полная версия", self.open_full_version)
         self.abridged_version_button = self.create_button("Сокращенная версия", self.open_abridged_version)
 
-        # Добавляем кнопки в основной layout
-        self.layout.addWidget(self.full_version_button, alignment=Qt.AlignCenter)  # Центрируем кнопку
-        self.layout.addWidget(self.abridged_version_button, alignment=Qt.AlignCenter)  # Центрируем кнопку
+        # кнопки в основной layout
+        self.layout.addWidget(self.full_version_button, alignment=Qt.AlignCenter)
+        self.layout.addWidget(self.abridged_version_button, alignment=Qt.AlignCenter)
 
         # Установка стиля окна
         self.setStyleSheet("background-color: #1B1B1F;")  # Цвет фона окна
@@ -37,7 +38,7 @@ class MainWindow(QWidget):
         """Создает кнопку с заданным текстом и командой."""
         button = QPushButton(text)
         button.setFixedHeight(40)
-        button.setFixedWidth(200)  # Задаем фиксированную ширину кнопок
+        button.setFixedWidth(200)  # фиксированная ширина кнопок
 
         # Обработка событий наведения и нажатия
         button.setStyleSheet("""
@@ -58,7 +59,7 @@ class MainWindow(QWidget):
                 color: white;  /* Цвет текста при нажатии */
             }
         """)
-        button.clicked.connect(command)  # Подключаем кнопку к команде
+        button.clicked.connect(command)  # подключение кнопки к команде
         return button
 
     def toggle_always_on_top(self):
@@ -67,7 +68,7 @@ class MainWindow(QWidget):
 
         if self.always_on_top:
             self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)  # Установить флаг 'всегда сверху'
-            self.my_bar.btn_pin.setIcon(QIcon(resource_path('data/unpin.png')))  # Изменяем иконку на закрепленную
+            self.my_bar.btn_pin.setIcon(QIcon(resource_path('data/unpin.png')))  # ставим иконку на закрепленную
         else:
             self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)  # Снять флаг 'всегда сверху'
             self.my_bar.btn_pin.setIcon(QIcon(resource_path('data/pin.png')))  # Возвращаем иконку на обычную

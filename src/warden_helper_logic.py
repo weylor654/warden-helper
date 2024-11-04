@@ -180,7 +180,7 @@ sections = {
 # Функция для разделения строки на раздел, главу и статью
 def parse_violation(violation_str):
     try:
-        # Проверяем, чтобы строка состояла не более чем из трех символов
+        # проверка, чтобы строка состояла не более чем из трех символов
         if len(violation_str) > 3:
             return None
         section = int(violation_str[0])  # Первый символ - раздел
@@ -230,7 +230,7 @@ def calculate_penalties(violations, selected_modifiers):
     # Применяем модификаторы
     total_penalty += total_modifiers
 
-    # Убедимся, что итоговое время не может быть отрицательным
+    # Проверка, что итоговое время не может быть отрицательным
     if total_penalty < 0:
         total_penalty = 0
 

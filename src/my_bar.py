@@ -21,9 +21,9 @@ class MainWindow(QWidget):
 
         # Основной интерфейс
         self.layout = QVBoxLayout()
-        self.my_bar = MyBar(self)  # Добавляем кастомную панель
-        self.layout.addWidget(self.my_bar)  # Добавляем заголовок в верхнюю часть окна
-        self.layout.addStretch()  # Растягиваем оставшуюся часть окна
+        self.my_bar = MyBar(self)  # кастомная панель
+        self.layout.addWidget(self.my_bar)
+        self.layout.addStretch() 
         self.setLayout(self.layout)
 
         # Убираем отступы и промежутки в основной компоновке
@@ -36,7 +36,7 @@ class MainWindow(QWidget):
 
         if self.always_on_top:
             self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)  # Установить флаг 'всегда сверху'
-            self.my_bar.btn_pin.setIcon(QIcon(resource_path('data/unpin.png')))  # Изменяем иконку на закрепленную
+            self.my_bar.btn_pin.setIcon(QIcon(resource_path('data/unpin.png')))  # иконку на закрепленную
         else:
             self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)  # Снять флаг 'всегда сверху'
             self.my_bar.btn_pin.setIcon(QIcon(resource_path('data/pin.png')))  # Возвращаем иконку на обычную
@@ -77,7 +77,7 @@ class MyBar(QWidget):
         """Добавление кнопок в заголовок окна."""
         self.btn_pin = QPushButton()
         self.btn_pin.setFixedSize(35, 35)
-        self.btn_pin.setIcon(QIcon(resource_path('data/pin.png')))  # Обновлённый путь
+        self.btn_pin.setIcon(QIcon(resource_path('data/pin.png')))  # Обновлённый путь, без resource_path в приложении нет png файлов
         self.btn_pin.setStyleSheet(self.button_style())
         self.btn_pin.clicked.connect(self.parent.toggle_always_on_top)
 
