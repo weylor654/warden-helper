@@ -181,6 +181,7 @@ sections = {
 def parse_violation(violation_str):
     try:
         # проверка, чтобы строка состояла не более чем из трех символов
+        # Проверяем, чтобы строка состояла не более чем из трех символов
         if len(violation_str) > 3:
             return None
         section = int(violation_str[0])  # Первый символ - раздел
