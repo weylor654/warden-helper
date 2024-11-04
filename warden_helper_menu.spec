@@ -5,7 +5,7 @@ a = Analysis(
     ['warden_helper_menu.py'],
     pathex=[],
     binaries=[],
-    datas=[('E:\\vs_code(saves)\\Corvax_warden_helper\\warden_helper_logic.py', '.'), ('E:\\vs_code(saves)\\Corvax_warden_helper\\warden_helper_ui_abridged.py', '.'), ('E:\\vs_code(saves)\\Corvax_warden_helper\\warden_helper_ui.py', '.')],
+    datas=[('my_bar.py', '.'), ('warden_helper_logic.py', '.'), ('warden_helper_ui_abridged.py', '.'), ('warden_helper_ui.py', '.'), ('data/krest.png', 'data'), ('data/pin.png', 'data'), ('data/under_line.png', 'data'), ('data/unpin.png', 'data')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -35,5 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['E:\\vs_code(saves)\\Corvax_warden_helper\\data\\warden_helper_icon.ico'],
+    icon=['data\\warden_helper_icon.ico'],
 )

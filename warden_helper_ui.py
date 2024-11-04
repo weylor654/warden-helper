@@ -1,304 +1,289 @@
-import tkinter as tk
+import sys
+from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QVBoxLayout, QWidget, QGridLayout, QFrame
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon
+from my_bar import MyBar, resource_path
+# Импортируем данные и функции
 from warden_helper_logic import article_names_to_codes, article_codes_to_penalties, articles, modifiers, penalty_duration
 
-# Глобальные переменные для хранения состояния
-modifier_labels = {}  # Словарь с метками модификаторов
-selected_cells = []  # Список выбранных ячеек
-modifier_selected = set()  # Множество выбранных модификаторов
+class WardenHelper(QMainWindow):
+    def __init__(self):
+        super().__init__()
 
+        # Устанавливаем флаги для окна без системного заголовка
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setStyleSheet("background-color: #1B1B1F; color: #EFEBD8;")
+        self.setGeometry(100, 100, 1000, 800)
 
-def get_modifier_value(modifier_name):
+        self.selected_cells = {}
+        self.modifier_selected = set()
+        self.modifier_labels = {}
 
-    return modifiers.get(modifier_name, 0)  # Возвращает значение модификатора или 0, если не найден
+        # Главный контейнер
+        main_widget = QWidget()
+        self.setCentralWidget(main_widget)
+        main_layout = QVBoxLayout(main_widget)
+        main_layout.setSpacing(0)
+        main_layout.setContentsMargins(0, 0, 0, 0)
 
-# Функция для получения кода статьи по названию
-def get_article_code_by_name(name):
-    return article_names_to_codes.get(name, "Неизвестный код")
+        # Добавляем кастомный заголовок
+        self.my_bar = MyBar(self)
+        main_layout.addWidget(self.my_bar)
 
-# Преобразование наказания в минуты
-def penalty_to_minutes(penalty_code):
-    if penalty_code in penalty_duration:
-        duration = penalty_duration[penalty_code]
-        if isinstance(duration, int):
-            return duration
-        else:
-            return None
-    return 0
+        # Создаем фрейм для таблиц и добавляем его в макет
+        tables_frame = QFrame()
+        tables_layout = QVBoxLayout(tables_frame)
+        tables_layout.setSpacing(0)
+        tables_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(tables_frame)
 
-# Функция для расчета наказаний
-def calculate_penalties(article_codes):
-    total_minutes = 0
-    has_life_sentence = False
-    has_death_penalty = False
-    verdict = []
+        # Создаем таблицу статей
+        self.create_article_frame(tables_layout)
 
-    if not article_codes:
-        return "Выберите хотя бы одну статью"
+        # Создаем таблицу модификаторов
+        self.create_modifier_frame(tables_layout)
 
-    for code in article_codes:
-        penalty_code = article_codes_to_penalties.get(code, "Неизвестный код")
-        print(f"Код статьи: {code}, Код наказания: {penalty_code}")  # Отладочная информация
-        
-        if penalty_code == "XX5":
-            has_life_sentence = True
-        elif penalty_code == "XX6":
-            has_death_penalty = True
-        else:
-            minutes = penalty_to_minutes(penalty_code)
-            print(f"Минуты наказания: {minutes}")  # Отладочная информация
-            
-            if minutes is not None:
-                total_minutes += minutes
+        # Добавляем поле для вердикта
+        verdict_frame = QFrame()
+        verdict_layout = QVBoxLayout(verdict_frame)
+        verdict_layout.setContentsMargins(0, 0, 0, 0)
 
-    # Применение модификаторов только если есть выбранные статьи
-    if article_codes:
-        for mod in modifier_selected:
-            mod_value = get_modifier_value(mod)
-            total_minutes += mod_value
+        self.verdict_label = QLabel("Вердикт:", self)
+        self.verdict_label.setStyleSheet("font: 18pt 'Verdana'; color: #d0d0d0;")
+        self.verdict_label.setAlignment(Qt.AlignLeft)
+        verdict_layout.addWidget(self.verdict_label)
 
-    # Определение вердикта
-    if has_death_penalty:
-        verdict.append("Высшая мера наказания")
-    elif has_life_sentence or total_minutes >= 75:
-        verdict.append("Пожизненное заключение")
-    elif total_minutes > 0:
-        verdict.append(f"{total_minutes} минут тюремного заключения")
+        # Добавляем красную линию под вердиктом
+        red_line = QFrame()
+        red_line.setStyleSheet("background-color: red;")
+        red_line.setFixedHeight(2)
+        verdict_layout.addWidget(red_line)
 
-    return ', '.join(verdict)
+        main_layout.addWidget(verdict_frame)
 
-def update_verdict_field(verdict_label):
-    selected_articles = [label.cget('text') for label in selected_cells]
-    print(f"Выбранные статьи: {selected_articles}")  # Отладочная информация
-    article_codes = [get_article_code_by_name(article) for article in selected_articles]
-    print(f"Коды статей: {article_codes}")  # Отладочная информация
-    verdict = calculate_penalties(article_codes)
-    verdict_label.config(text="Вердикт: " + verdict)
+    def create_article_frame(self, layout):
+        # Настройка таблицы статей
+        frame = QFrame()
+        grid_layout = QGridLayout(frame)
+        grid_layout.setSpacing(0)  # Убираем промежутки между ячейками
+        grid_layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(frame)
 
-def on_modifier_click(modifier_name):
-    button = modifier_labels[modifier_name]
-    current_color = button.cget('bg')
-    if current_color == '#272727':  # Если модификатор не выбран
-        button.config(bg='#509ee3')  # Выбрать модификатор
-        modifier_selected.add(modifier_name)
-    else:
-        button.config(bg='#272727')  # Убрать выбор модификатора
-        modifier_selected.remove(modifier_name)
-    update_verdict_field(verdict_label)
+        columns = ["XX1", "XX2", "XX3", "XX4", "XX5", "XX6"]
+        chapters = ["11X", "12X", "13X", "14X", "21X", "22X", "31X", "32X", "41X", "42X", "43X"]
+        colors = {
+            "XX1": "#0F4F27", "XX2": "#414700", "XX3": "#5f3800",
+            "XX4": "#611300", "XX5": "#57000C", "XX6": "#000000"
+        }
 
-def lighten_color(hex_color, percent):
-    """Осветляет цвет на заданный процент."""
-    rgb = [int(hex_color[i:i+2], 16) for i in (1, 3, 5)]
-    return '#%02x%02x%02x' % tuple(min(int(c + (255 - c) * percent), 255) for c in rgb)
+        # Заголовок для строки "Глава"
+        chapter_label = QLabel("Глава", self)
+        chapter_label.setStyleSheet("background-color: #333; color: white; font: bold 10pt 'Verdana';")
+        chapter_label.setAlignment(Qt.AlignCenter)
+        chapter_label.setFixedSize(100, 40)  # Ширина выровнена по слову "Глава"
+        grid_layout.addWidget(chapter_label, 0, 0)
 
-def darken_color(hex_color, percent):
-    """Темняет цвет на заданный процент."""
-    rgb = [int(hex_color[i:i+2], 16) for i in (1, 3, 5)]
-    return '#%02x%02x%02x' % tuple(max(int(c * (1 - percent)), 0) for c in rgb)
+        # Создаем заголовки столбцов
+        for i, col in enumerate(columns):
+            label = QLabel(col, self)
+            label.setStyleSheet(f"background-color: {colors[col]}; color: white; font: bold 10pt 'Verdana';")
+            label.setAlignment(Qt.AlignCenter)
+            label.setFixedSize(214, 40)  # Широкие заголовки, уменьшенная высота
+            grid_layout.addWidget(label, 0, i + 1)
 
-def toggle_selection(label, selected_cells, chapter, chapter_selections, original_bg_color, hover_color, selected_bg_color, verdict_label):
-    """Переключает выделение ячейки при клике с учётом главы и обновляет вердикт."""
-    if label.is_empty:
-        return  # Не изменяем состояние для пустых ячеек
+        # Создаем ячейки статей
+        for i, chapter in enumerate(chapters):
+            chapter_label = QLabel(chapter, self)
+            chapter_label.setStyleSheet("background-color: #333; color: white; font: 10pt 'Verdana';")
+            chapter_label.setAlignment(Qt.AlignCenter)
+            chapter_label.setFixedSize(100, 60)  # Ширина для глав
+            grid_layout.addWidget(chapter_label, i + 1, 0)
 
-    if label in selected_cells:
-        selected_cells.remove(label)
-        chapter_selections[chapter] = None
-        label.config(highlightbackground=original_bg_color, bg=original_bg_color)
-    else:
-        if chapter_selections[chapter]:
-            previous_label = chapter_selections[chapter]
-            selected_cells.remove(previous_label)
-            previous_label.config(highlightbackground=previous_label.original_bg_color, bg=previous_label.original_bg_color)
-        selected_cells.append(label)
-        chapter_selections[chapter] = label
-        label.config(highlightbackground="#00BFFF", bg=selected_bg_color)
+            for j, col in enumerate(columns):
+                article = articles.get(chapter, [""])[j] if j < len(articles.get(chapter, [])) else ""
+                label = QLabel(article, self)
+                label.setAlignment(Qt.AlignCenter)
+                label.setFixedSize(214, 60)  # Широкие ячейки, уменьшенная высота
+                label.setWordWrap(True)
 
-    # Обновляем вердикт после изменения выбора
-    update_verdict_field(verdict_label)
+                # Устанавливаем стиль с курсивным и жирным текстом
+                label.setStyleSheet(f"background-color: {colors[col]}; color: #EFEBD8; font: bold italic 9pt 'Verdana';")
+                label.original_color = colors[col]  # Сохраняем исходный цвет
+                label.is_xx6 = (col == "XX6")  # Флаг для столбца XX6
 
-def on_enter(label, selected_cells, hover_color, selected_bg_color):
-    """Меняет цвет при наведении курсора, если ячейка не выбрана."""
-    if label not in selected_cells:
-        label.config(bg=hover_color)
-    else:
-        label.config(bg=selected_bg_color)
+                if article:  # Если в ячейке есть текст, добавляем события
+                    label.mousePressEvent = lambda event, lbl=label, ch=chapter: self.toggle_selection(lbl, ch)
+                    label.enterEvent = lambda event, lbl=label: self.on_hover_enter(lbl)
+                    label.leaveEvent = lambda event, lbl=label: self.on_hover_leave(lbl)
 
-def on_leave(label, selected_cells, original_bg_color, selected_bg_color):
-    """Возвращает цвет после ухода курсора, если ячейка не выбрана."""
-    if label not in selected_cells:
-        label.config(bg=original_bg_color)
-    else:
-        label.config(bg=selected_bg_color)
-        
-def create_colored_label(frame, text, bg_color, row, column, selected_cells, chapter, chapter_selections):
-    original_bg_color = bg_color
-    if bg_color == "#000000":
-        hover_color = lighten_color(bg_color, 0.1)
-        selected_bg_color = lighten_color(bg_color, 0.3)
-    else:
-        hover_color = darken_color(bg_color, 0.2)
-        selected_bg_color = darken_color(bg_color, 0.3)
-    
-    label = tk.Label(frame, text=text, bg=bg_color, fg="#EFEBD8", padx=5, pady=5,
-                    width=25, height=3, anchor="center", wraplength=150, justify="center",
-                    borderwidth=0, relief="flat", highlightthickness=2, highlightbackground=bg_color,
-                    font=("Verdana", 9, "bold italic"))  # Жирный и курсивный шрифт
-    label.grid(row=row, column=column, sticky="nsew")
-    
-    label.original_bg_color = bg_color
-    label.is_empty = not text.strip()  # Устанавливаем флаг для пустых ячеек
-    
-    if not label.is_empty:
-        label.bind("<Enter>", lambda e: on_enter(label, selected_cells, hover_color, selected_bg_color))
-        label.bind("<Leave>", lambda e: on_leave(label, selected_cells, original_bg_color, selected_bg_color))
-        label.bind("<Button-1>", lambda e: toggle_selection(label, selected_cells, chapter, chapter_selections, original_bg_color, hover_color, selected_bg_color, verdict_label))
+                grid_layout.addWidget(label, i + 1, j + 1)
 
-    return label
+    def create_modifier_frame(self, layout):
+        # Настройка таблицы модификаторов
+        frame = QFrame()
+        grid_layout = QGridLayout(frame)
+        grid_layout.setSpacing(0)  # Убираем промежутки между ячейками
+        grid_layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(frame)
 
+        # Добавляем метки модификаторов
+        for i, (mod_name, _) in enumerate(modifiers.items()):
+            label = QLabel(mod_name, self)
+            label.setAlignment(Qt.AlignCenter)
+            label.setFixedSize(173, 80)  # Уменьшаем длину и увеличиваем высоту ячеек модификаторов
+            label.setWordWrap(True)
+            label.setStyleSheet("background-color: #444444; color: #EFEBD8; font: bold italic 9pt 'Verdana';")
+            label.original_color = "#444444"  # Сохраняем исходный цвет
 
-def on_modifier_enter(label, modifier_selected, hover_color):
-    """Меняет цвет при наведении курсора на модификатор."""
-    if label not in modifier_selected:
-        label.config(bg=darken_color(label.original_bg_color, 0.1))
+            # Добавляем события для модификаторов
+            label.mousePressEvent = lambda event, lbl=label: self.toggle_modifier(lbl)
+            label.enterEvent = lambda event, lbl=label: self.on_hover_enter(lbl)
+            label.leaveEvent = lambda event, lbl=label: self.on_hover_leave(lbl)
 
-def on_modifier_leave(label, modifier_selected, original_bg_color):
-    """Возвращает цвет после ухода курсора с модификатора."""
-    if label not in modifier_selected:
-        label.config(bg=original_bg_color)
+            grid_layout.addWidget(label, 0, i)
 
-def toggle_modifier_info(mod_name):
-    """Переключает выделение модификатора.""" 
-    label = modifier_labels[mod_name]
-    if mod_name in modifier_selected:
-        modifier_selected.remove(mod_name)
-        label.config(bg="#444444", fg="#EFEBD8", highlightbackground="#444444")
-    else:
-        modifier_selected.add(mod_name)
-        label.config(bg="#444444", fg="#EFEBD8", highlightbackground="#00BFFF")
-    update_verdict_field(verdict_label)
-
-def create_colored_modifier_label(frame, mod_name, bg_color, row, column, modifier_selected):
-    label = tk.Label(frame, text=mod_name, bg=bg_color, fg="#EFEBD8", padx=5, pady=10,
-                    width=20, height=2, anchor="center", wraplength=150, justify="center",
-                    borderwidth=0, relief="flat", highlightthickness=2, highlightbackground=bg_color,
-                    font=("Verdana", 10, "bold"))
-
-    label.grid(row=row, column=column, sticky="nsew")
-    
-    label.original_bg_color = bg_color
-    
-    # Обработка событий для модификаторов
-    label.bind("<Enter>", lambda e: on_modifier_enter(label, modifier_selected, darken_color(bg_color, 0.1)))
-    label.bind("<Leave>", lambda e: on_modifier_leave(label, modifier_selected, bg_color))
-    label.bind("<Button-1>", lambda e, mod_name=mod_name: toggle_modifier_info(mod_name))
-    
-    return label
-
-def run_table_version():
-    global modifier_selected, modifier_labels, selected_cells, verdict_label
-
-    root = tk.Tk()
-    root.title("Warden Helper")
-    root.config(bg='#1B1B1F')
-
-    colors = {
-        "XX1": "#0F4F27",
-        "XX2": "#414700",
-        "XX3": "#5f3800",
-        "XX4": "#611300",
-        "XX5": "#57000C",
-        "XX6": "#000000"
-    }
-      
-    # Настраиваем главный фрейм для таблиц статей и модификаторов
-    main_frame = tk.Frame(root, bg='#1B1B1F')
-    main_frame.grid(row=0, column=0, padx=10, pady=0, sticky="nsew")  # Убираем отступы снизу
-
-    # Настройка сетки для масштабирования
-    root.grid_rowconfigure(0, weight=1)
-    root.grid_columnconfigure(0, weight=1)
-    
-    # Фрейм для таблицы статей
-    article_frame = tk.Frame(main_frame, bg='#1B1B1F')
-    article_frame.grid(row=0, column=0, sticky="nsew")  # Полное заполнение фрейма
-
-    # Заголовки для таблицы статей
-    columns = ["XX1", "XX2", "XX3", "XX4", "XX5", "XX6"]
-    chapters = ["11X", "12X", "13X", "14X", "21X", "22X", "31X", "32X", "41X", "42X", "43X"]
-
-    selected_cells = []
-    chapter_selections = {chapter: None for chapter in chapters}
-
-    # Устанавливаем фиксированную ширину для столбца "Глава"
-    article_frame.grid_columnconfigure(0, minsize=100)  # Фиксированная ширина для первого столбца
-
-    # Настройка гибкости остальных колонок
-    for i in range(1, len(columns) + 1):
-        article_frame.grid_columnconfigure(i, weight=1, minsize=80)  # Остальные столбцы растягиваются, но с минимальной шириной
-
-    # Заголовки столбцов
-    for i, col in enumerate(columns):
-        label = tk.Label(article_frame, text=col, bg=colors[col], fg="white", padx=5, pady=5,
-                         anchor="center", wraplength=150, justify="center",
-                         font=("Verdana", 10, "bold"))  # Жирный шрифт
-        label.grid(row=0, column=i+1, sticky="nsew")
-        
-    # Ячейка "Раздел" над 11X с жирным шрифтом
-    label = tk.Label(article_frame, text="Глава", bg="#333", fg="white", padx=5, pady=5,
-                    anchor="center", wraplength=150, justify="center",
-                    font=("Verdana", 10, "bold"))  # Жирный шрифт
-    label.grid(row=0, column=0, sticky="nsew")
-
-    # Заголовки строк
-    for i, chapter in enumerate(chapters):
-        label = tk.Label(article_frame, text=chapter, padx=5, pady=5, bg="#333", fg="white",
-                         anchor="center", wraplength=150, justify="center",
-                         font=("Verdana", 10, "bold"))  # Жирный шрифт
-        label.grid(row=i+2, column=0, sticky="nsew")
-
-    # Заполнение таблицы
-    for i, chapter in enumerate(chapters):
-        for j, col in enumerate(columns):
-            if chapter in articles:
-                if len(articles[chapter]) > j:
-                    article = articles[chapter][j]
-                    is_active = True
-                else:
-                    article = ""
-                    is_active = False
+    def on_hover_enter(self, label):
+        # Эффект при наведении: подсветка для XX6, затемнение для остальных
+        if label not in self.selected_cells.values() and label not in self.modifier_selected:
+            if getattr(label, "is_xx6", False):  # Проверяем, является ли ячейка из столбца XX6
+                highlight_color = self.brighten_color(label.original_color, 0.2)
+                label.setStyleSheet(f"background-color: {highlight_color}; color: #EFEBD8; font: bold italic 9pt 'Verdana';")
             else:
-                article = ""
-                is_active = False
+                darker_color = self.darken_color(label.original_color, 0.2)
+                label.setStyleSheet(f"background-color: {darker_color}; color: #EFEBD8; font: bold italic 9pt 'Verdana';")
 
-            label = create_colored_label(article_frame, article, colors[col], i+2, j+1, selected_cells, chapter, chapter_selections)
-            label.is_active = is_active
+    def on_hover_leave(self, label):
+        # Возвращаем цвет, если ячейка не выбрана, иначе оставляем стиль выбранной ячейки
+        if label not in self.selected_cells.values() and label not in self.modifier_selected:
+            label.setStyleSheet(f"background-color: {label.original_color}; color: #EFEBD8; font: bold italic 9pt 'Verdana';")
+        else:
+            label.setStyleSheet(f"background-color: {self.darken_color(label.original_color, 0.2)}; "
+                                "color: #EFEBD8; font: bold italic 9pt 'Verdana'; border: 2px solid #00BFFF;")
 
-    # Создание фрейма для модификаторов
-    modifier_frame = tk.Frame(main_frame, bg='#1B1B1F')
-    modifier_frame.grid(row=1, column=0, sticky="nsew", padx=(0, 0))  # Без отступов между фреймами
+    def toggle_selection(self, label, chapter):
+        """Переключение выбора статьи."""
+        # Если статья уже выбрана, снимаем выделение
+        if label in self.selected_cells.values():
+            label.setStyleSheet(f"background-color: {label.original_color}; color: #EFEBD8; font: bold italic 9pt 'Verdana';")
+            self.selected_cells.pop(chapter, None)
+        else:
+            # Убираем выделение с предыдущей выбранной статьи в этой главе
+            if chapter in self.selected_cells:
+                previous_label = self.selected_cells[chapter]
+                previous_label.setStyleSheet(f"background-color: {previous_label.original_color}; color: #EFEBD8; font: bold italic 9pt 'Verdana';")
 
-    modifier_frame.grid_rowconfigure(0, weight=1)
-    modifier_frame.grid_columnconfigure(tuple(range(len(modifiers))), weight=1)
+            label.setStyleSheet(f"background-color: {self.darken_color(label.original_color, 0.2)}; "
+                                "color: #EFEBD8; font: bold italic 9pt 'Verdana'; border: 2px solid #00BFFF;")
+            self.selected_cells[chapter] = label
 
-    # Инициализация списка для хранения выбранных модификаторов и меток
-    modifier_selected = set()
-    modifier_labels = {}
+        # Если ни одна статья не выбрана, сбрасываем модификаторы
+        if not self.selected_cells:
+            self.reset_modifiers()
 
-    # Добавление меток модификаторов
-    for i, (mod_name, _) in enumerate(modifiers.items()):
-        label = create_colored_modifier_label(modifier_frame, mod_name, "#444444", 0, i, modifier_selected)
-        label.config(height=3)  # Увеличение высоты ячейки
-        modifier_labels[mod_name] = label
+        self.update_verdict_field()
 
-    # Добавление надписи "Вердикт" и красной линии
-    verdict_label = tk.Label(root, text="Вердикт:", bg='#1B1B1F', fg='#d0d0d0', font=('Verdana', 18))
-    verdict_label.grid(row=2, column=0, padx=10, pady=(10, 0), sticky="w")
+    def toggle_modifier(self, label):
+        """Переключение модификатора и обновление вердикта."""
+        # Проверяем, выбрана ли хотя бы одна статья
+        if not self.selected_cells:
+            self.verdict_label.setText("Выберите хотя бы одну статью")
+            return
+        
+        # Если модификатор уже выбран, снимаем выделение
+        if label in self.modifier_selected:
+            label.setStyleSheet(f"background-color: {label.original_color}; color: #EFEBD8; font: bold italic 9pt 'Verdana';")
+            self.modifier_selected.remove(label)
+        else:
+            label.setStyleSheet(f"background-color: {self.darken_color(label.original_color, 0.2)}; "
+                                "color: #EFEBD8; font: bold italic 9pt 'Verdana'; border: 2px solid #00BFFF;")
+            self.modifier_selected.add(label)
 
-    verdict_frame = tk.Frame(root, bg='#1B1B1F')
-    verdict_frame.grid(row=3, column=0, padx=10, pady=(0, 20), sticky="nsew")
+        self.update_verdict_field()
+        
+    def reset_modifiers(self):
+        """Сбрасывает все выбранные модификаторы."""
+        for label in self.modifier_selected:
+            label.setStyleSheet("background-color: #444444; color: #EFEBD8; font: bold italic 9pt 'Verdana';")
+        self.modifier_selected.clear()
 
-    verdict_line = tk.Canvas(verdict_frame, height=2, bg='red', bd=0, highlightthickness=0)
-    verdict_line.pack(fill='x')
 
-    # Запуск главного цикла
-    root.mainloop()
+    def update_verdict_field(self):
+        # Логика обновления поля вердикта
+        selected_articles = [label.text() for label in self.selected_cells.values() if label]
+        article_codes = [self.get_article_code_by_name(article) for article in selected_articles]
+        verdict = self.calculate_penalties(article_codes)
+        self.verdict_label.setText("Вердикт: " + verdict)
+
+    def get_article_code_by_name(self, name):
+        return article_names_to_codes.get(name, "Неизвестный код")
+
+    def calculate_penalties(self, article_codes):
+        # Логика расчета наказаний
+        total_minutes = 0
+        has_life_sentence = False
+        has_death_penalty = False
+        verdict = []
+
+        for code in article_codes:
+            penalty_code = article_codes_to_penalties.get(code, "Неизвестный код")
+            if penalty_code == "XX5":
+                has_life_sentence = True
+            elif penalty_code == "XX6":
+                has_death_penalty = True
+            else:
+                minutes = penalty_duration.get(penalty_code, 0)
+                if isinstance(minutes, int):
+                    total_minutes += minutes
+
+        if self.modifier_selected:
+            for mod in self.modifier_selected:
+                total_minutes += modifiers.get(mod.text(), 0)
+
+        if has_death_penalty:
+            verdict.append("Высшая мера наказания")
+        elif has_life_sentence or total_minutes >= 75:
+            verdict.append("Пожизненное заключение")
+        elif total_minutes > 0:
+            verdict.append(f"{total_minutes} минут тюремного заключения")
+
+        return ', '.join(verdict)
+
+    def darken_color(self, hex_color, percent):
+        """Утилита для затемнения цвета."""
+        rgb = [int(hex_color[i:i + 2], 16) for i in (1, 3, 5)]
+        darkened_rgb = [max(int(c * (1 - percent)), 0) for c in rgb]
+        return f'#{darkened_rgb[0]:02x}{darkened_rgb[1]:02x}{darkened_rgb[2]:02x}'
+
+    def brighten_color(self, hex_color, percent):
+        """Утилита для подсветки цвета."""
+        rgb = [int(hex_color[i:i + 2], 16) for i in (1, 3, 5)]
+        brightened_rgb = [min(int(c + (255 - c) * percent), 255) for c in rgb]
+        return f'#{brightened_rgb[0]:02x}{brightened_rgb[1]:02x}{brightened_rgb[2]:02x}'
+    
+    def toggle_always_on_top(self):
+        """Переключение окна между обычным состоянием и 'всегда сверху'."""
+        self.always_on_top = not getattr(self, "always_on_top", False)
+
+        if self.always_on_top:
+            self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+            self.my_bar.btn_pin.setIcon(QIcon(resource_path('data/unpin.png')))  # Изменяем иконку на закрепленную
+        else:
+            self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)
+            self.my_bar.btn_pin.setIcon(QIcon(resource_path('data/pin.png')))  # Возвращаем иконку на обычную
+
+        self.show()  # Обновляем окно
+
+# Функция для запуска полной версии таблицы
+def run_table_version():
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication(sys.argv)
+
+    main_window = WardenHelper()
+    main_window.show()
+
+    if not QApplication.instance().thread().isRunning():
+        sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    run_table_version()

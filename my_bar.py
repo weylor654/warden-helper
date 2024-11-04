@@ -1,7 +1,15 @@
+import os
 import sys
 from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
+
+# Без этого в приложении не отображаются иконки пина при нажатии
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
 
 
 class MainWindow(QWidget):
@@ -28,10 +36,10 @@ class MainWindow(QWidget):
 
         if self.always_on_top:
             self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)  # Установить флаг 'всегда сверху'
-            self.my_bar.btn_pin.setIcon(QIcon('data/unpin.png'))  # Изменяем иконку на закрепленную
+            self.my_bar.btn_pin.setIcon(QIcon(resource_path('data/unpin.png')))  # Изменяем иконку на закрепленную
         else:
             self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)  # Снять флаг 'всегда сверху'
-            self.my_bar.btn_pin.setIcon(QIcon('data/pin.png'))  # Возвращаем иконку на обычную
+            self.my_bar.btn_pin.setIcon(QIcon(resource_path('data/pin.png')))  # Возвращаем иконку на обычную
 
         self.show()  # Обновляем окно
 
@@ -69,25 +77,26 @@ class MyBar(QWidget):
         """Добавление кнопок в заголовок окна."""
         self.btn_pin = QPushButton()
         self.btn_pin.setFixedSize(35, 35)
-        self.btn_pin.setIcon(QIcon('data/pin.png'))  # Начальная иконка
+        self.btn_pin.setIcon(QIcon(resource_path('data/pin.png')))  # Обновлённый путь
         self.btn_pin.setStyleSheet(self.button_style())
         self.btn_pin.clicked.connect(self.parent.toggle_always_on_top)
 
         self.btn_min = QPushButton()
         self.btn_min.setFixedSize(35, 35)
-        self.btn_min.setIcon(QIcon('data/under_line.png'))
+        self.btn_min.setIcon(QIcon(resource_path('data/under_line.png')))
         self.btn_min.setStyleSheet(self.button_style())
         self.btn_min.clicked.connect(self.parent.showMinimized)
 
         self.btn_close = QPushButton()
         self.btn_close.setFixedSize(35, 35)
-        self.btn_close.setIcon(QIcon('data/krest.png'))
+        self.btn_close.setIcon(QIcon(resource_path('data/krest.png')))
         self.btn_close.setStyleSheet(self.button_style())
         self.btn_close.clicked.connect(self.parent.close)
 
         self.layout.addWidget(self.btn_pin)
         self.layout.addWidget(self.btn_min)
         self.layout.addWidget(self.btn_close)
+
 
     def button_style(self):
         """Возвращает стиль кнопки."""

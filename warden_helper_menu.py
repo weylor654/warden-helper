@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton
-from my_bar import MyBar  # Импортируем класс MyBar из вашего файла my_bar
+from my_bar import MyBar, resource_path  # Импортируем класс MyBar из вашего файла my_bar
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -66,15 +66,15 @@ class MainWindow(QWidget):
 
         if self.always_on_top:
             self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)  # Установить флаг 'всегда сверху'
-            self.my_bar.btn_pin.setIcon(QIcon('data/unpin.png'))  # Изменяем иконку на закрепленную
+            self.my_bar.btn_pin.setIcon(QIcon(resource_path('data/unpin.png')))  # Изменяем иконку на закрепленную
         else:
             self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)  # Снять флаг 'всегда сверху'
-            self.my_bar.btn_pin.setIcon(QIcon('data/pin.png'))  # Возвращаем иконку на обычную
+            self.my_bar.btn_pin.setIcon(QIcon(resource_path('data/pin.png')))  # Возвращаем иконку на обычную
 
         self.show()  # Обновляем окно
 
     def open_full_version(self):
-        from GUI_test import run_table_version
+        from warden_helper_ui import run_table_version
         run_table_version()
 
     def open_abridged_version(self):

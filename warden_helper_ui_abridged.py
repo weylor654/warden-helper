@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QLineEdit, QLabel, QPushButton, QComboBox, QVBoxLayout, QFrame, QTextEdit
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPalette, QColor, QIcon
-from my_bar import MyBar
+from my_bar import MyBar, resource_path
 from warden_helper_logic import calculate_penalties
 
 MODIFIER_OPTIONS = [
@@ -20,7 +20,7 @@ class MainWindow(QWidget):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.setWindowFlags(Qt.FramelessWindowHint)
-        self.setMinimumSize(500, 400)
+        self.setMinimumSize(360, 280)  # Измененные размеры окна
         self.always_on_top = False
 
         # Установка цветовой схемы
@@ -95,7 +95,7 @@ class MainWindow(QWidget):
         self.modifier_entry.setStyleSheet(
             "background-color: #2E2E2E; color: white; font-size: 16px; border: 1px solid #3A3A3A; padding: 10px; border-radius: 10px;"
         )
-        self.modifier_entry.setFixedHeight(150)  # Установка фиксированной высоты
+        self.modifier_entry.setFixedHeight(90)  # Установка фиксированной высоты
         self.content_layout.addWidget(self.modifier_entry)
 
         self.content_layout.addSpacing(20)
@@ -122,17 +122,19 @@ class MainWindow(QWidget):
 
         self.setStyleSheet("background-color: #1B1B1F;")
 
+
     def toggle_always_on_top(self):
-        self.always_on_top = not self.always_on_top
+        """Переключение окна между обычным состоянием и 'всегда сверху'."""
+        self.always_on_top = not self.always_on_top  # Переключаем состояние
 
         if self.always_on_top:
-            self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
-            self.my_bar.btn_pin.setIcon(QIcon('data/unpin.png'))
+            self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)  # Установить флаг 'всегда сверху'
+            self.my_bar.btn_pin.setIcon(QIcon(resource_path('data/unpin.png')))  # Изменяем иконку на закрепленную
         else:
-            self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)
-            self.my_bar.btn_pin.setIcon(QIcon('data/pin.png'))
+            self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)  # Снять флаг 'всегда сверху'
+            self.my_bar.btn_pin.setIcon(QIcon(resource_path('data/pin.png')))  # Возвращаем иконку на обычную
 
-        self.show()
+        self.show()  # Обновляем окно
 
     def add_modifier(self):
         selected_modifier = self.modifier_autocomplete.currentText()
@@ -157,16 +159,24 @@ class MainWindow(QWidget):
                 self.modifier_entry.setPlainText('\n'.join(modifiers))
             else:
                 self.modifier_entry.clear()  # Если это единственный модификатор, очищаем поле
-
+                
     def calculate_verdict(self):
-        articles = self.article_entry.text().strip().split()
-        
+        # Получаем статьи из поля ввода и удаляем пустые строки
+        articles = [article for article in self.article_entry.text().strip().split() if article]
+
+        # Проверяем, есть ли статьи
+        if not articles:
+            self.verdict_label.setText("Вердикт: Введите хотя бы одну статью")
+            return
+
         # Разделяем строку модификаторов по символу '\n' и удаляем лишние пробелы
         modifiers = [modifier.strip().split('. ', 1)[1] for modifier in self.modifier_entry.toPlainText().split('\n') if modifier.strip()]
         
-        # Передаем список модификаторов в функцию calculate_penalties
+        # Передаем список статей и модификаторов в функцию calculate_penalties
         verdict = calculate_penalties(articles, modifiers)
         self.verdict_label.setText(f"Вердикт: {verdict}")
+
+
 
 
 def run_abridged_version():
