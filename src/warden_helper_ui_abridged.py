@@ -38,7 +38,7 @@ class MainWindow(QWidget):
         self.setLayout(self.layout)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
-        # Добавляем кастомную панель заголовка
+        # кастомный заголовок
         self.my_bar = MyBar(self)
         self.my_bar.setFixedHeight(40)
         self.layout.addWidget(self.my_bar)
@@ -153,11 +153,11 @@ class MainWindow(QWidget):
         self.always_on_top = not self.always_on_top  # Переключаем состояние
 
         if self.always_on_top:
-            self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)  # Установить флаг 'всегда сверху'
-            self.my_bar.btn_pin.setIcon(QIcon(resource_path('data/unpin.png')))  # Изменяем иконку на закрепленную
+            self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint) 
+            self.my_bar.btn_pin.setIcon(QIcon(resource_path('data/unpin.png'))) 
         else:
-            self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)  # Снять флаг 'всегда сверху'
-            self.my_bar.btn_pin.setIcon(QIcon(resource_path('data/pin.png')))  # Возвращаем иконку на обычную
+            self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)  
+            self.my_bar.btn_pin.setIcon(QIcon(resource_path('data/pin.png'))) 
 
         self.show()  # Обновляем окно
 
@@ -198,7 +198,7 @@ class MainWindow(QWidget):
         # Разделяем строку модификаторов по символу '\n' и удаляем лишние пробелы
         modifiers = [modifier.strip().split('. ', 1)[1] for modifier in self.modifier_entry.toPlainText().split('\n') if modifier.strip()]
         
-        # Передаем список статей и модификаторов в функцию calculate_penalties
+        # передача списка статей и модификаторов в функцию calculate_penalties
         verdict = calculate_penalties(articles, modifiers)
         self.verdict_label.setText(f"Вердикт: {verdict}")
 

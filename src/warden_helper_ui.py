@@ -1,11 +1,13 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QVBoxLayout, QWidget, QGridLayout, QFrame
+from PyQt5.QtWidgets import (
+    QApplication, QLabel, QMainWindow, QVBoxLayout, QWidget, QGridLayout, QFrame
+)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from my_bar import MyBar, resource_path
-# Импортируем данные и функции
-from warden_helper_logic import article_names_to_codes, article_codes_to_penalties, articles, modifiers, penalty_duration
-
+from warden_helper_logic import (
+    article_names_to_codes, article_codes_to_penalties, articles, modifiers, penalty_duration
+)
 class WardenHelper(QMainWindow):
     def __init__(self):
         super().__init__()

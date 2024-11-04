@@ -230,7 +230,7 @@ def calculate_penalties(violations, selected_modifiers):
     # Применяем модификаторы
     total_penalty += total_modifiers
 
-    # Убедимся, что итоговое время не может быть отрицательным
+    # Проверка, что итоговое время не может быть отрицательным
     if total_penalty < 0:
         total_penalty = 0
 
