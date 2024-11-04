@@ -5,7 +5,7 @@ a = Analysis(
     ['warden_helper_menu.py'],
     pathex=[],
     binaries=[],
-    datas=[('my_bar.py', '.'), ('warden_helper_logic.py', '.'), ('warden_helper_ui_abridged.py', '.'), ('warden_helper_ui.py', '.'), ('data/krest.png', 'data'), ('data/pin.png', 'data'), ('data/under_line.png', 'data'), ('data/unpin.png', 'data')],
+    datas=[('my_bar.py', '.'), ('warden_helper_logic.py', '.'), ('warden_helper_ui_abridged.py', '.'), ('warden_helper_ui.py', '.'), ('data/krest.png', 'data'), ('data/pin.png', 'data'), ('data/under_line.png', 'data'), ('data/unpin.png', 'data'), ('data/warden_helper_icon.png', 'data')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
