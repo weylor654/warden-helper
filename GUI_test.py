@@ -161,6 +161,7 @@ class WardenHelper(QMainWindow):
                                 "color: #EFEBD8; font: bold italic 9pt 'Verdana'; border: 2px solid #00BFFF;")
 
     def toggle_selection(self, label, chapter):
+        """Переключение выбора статьи."""
         # Если статья уже выбрана, снимаем выделение
         if label in self.selected_cells.values():
             label.setStyleSheet(f"background-color: {label.original_color}; color: #EFEBD8; font: bold italic 9pt 'Verdana';")
@@ -175,9 +176,19 @@ class WardenHelper(QMainWindow):
                                 "color: #EFEBD8; font: bold italic 9pt 'Verdana'; border: 2px solid #00BFFF;")
             self.selected_cells[chapter] = label
 
+        # Если ни одна статья не выбрана, сбрасываем модификаторы
+        if not self.selected_cells:
+            self.reset_modifiers()
+
         self.update_verdict_field()
 
     def toggle_modifier(self, label):
+        """Переключение модификатора и обновление вердикта."""
+        # Проверяем, выбрана ли хотя бы одна статья
+        if not self.selected_cells:
+            self.verdict_label.setText("Выберите хотя бы одну статью")
+            return
+        
         # Если модификатор уже выбран, снимаем выделение
         if label in self.modifier_selected:
             label.setStyleSheet(f"background-color: {label.original_color}; color: #EFEBD8; font: bold italic 9pt 'Verdana';")
@@ -188,6 +199,13 @@ class WardenHelper(QMainWindow):
             self.modifier_selected.add(label)
 
         self.update_verdict_field()
+        
+    def reset_modifiers(self):
+        """Сбрасывает все выбранные модификаторы."""
+        for label in self.modifier_selected:
+            label.setStyleSheet("background-color: #444444; color: #EFEBD8; font: bold italic 9pt 'Verdana';")
+        self.modifier_selected.clear()
+
 
     def update_verdict_field(self):
         # Логика обновления поля вердикта
@@ -254,7 +272,7 @@ class WardenHelper(QMainWindow):
             self.my_bar.btn_pin.setIcon(QIcon('data/pin.png'))  # Возвращаем иконку на обычную
 
         self.show()  # Обновляем окно
-        
+
 # Функция для запуска полной версии таблицы
 def run_table_version():
     app = QApplication.instance()
