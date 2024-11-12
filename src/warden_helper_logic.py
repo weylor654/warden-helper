@@ -182,13 +182,13 @@ def parse_violation(violation_str):
     try:
         # Проверяем, чтобы строка состояла не более чем из трех символов
         if len(violation_str) > 3:
-            return None
+            return "Несуществующая статья"
         section = int(violation_str[0])  # Первый символ - раздел
         chapter = int(violation_str[1])  # Второй символ - глава
         article = int(violation_str[2])  # Третий символ - статья
         return section, chapter, article
     except (IndexError, ValueError):
-        return None
+        return "Несуществующая статья"
 
 
 # Функция для расчета наказания по статьям
@@ -197,13 +197,23 @@ def calculate_penalties(violations, selected_modifiers):
     has_capital_punishment = False
     has_life_sentence = False
     total_modifiers = 0
+    count_xx5_articles = 0 
 
     for violation_str in violations:
         result = parse_violation(violation_str)
-        if result:
+        # Проверка, если результат - сообщение об ошибке
+        if isinstance(result, str):
+            return result
+        else:
             section, chapter, article = result
             if section in sections and chapter in sections[section] and article in sections[section][chapter]:
                 penalty = sections[section][chapter][article]
+
+                if article == 5:
+                    count_xx5_articles += 1
+                    if count_xx5_articles >= 2:
+                        return "Высшая мера"
+
                 if penalty == "высшая мера":
                     has_capital_punishment = True
                 elif penalty == "пожизненное заключение":
@@ -212,16 +222,16 @@ def calculate_penalties(violations, selected_modifiers):
                     if (section, chapter) not in chapter_violations:
                         chapter_violations[(section, chapter)] = []
                     chapter_violations[(section, chapter)].append(penalty)
-    
+
     if has_capital_punishment:
         return "Высшая мера"
     if has_life_sentence:
         return "Пожизненное заключение"
-    
+
     total_penalty = 0
     for chapter, penalties in chapter_violations.items():
         total_penalty += max(penalties)
-    
+
     # Применяем модификаторы
     for modifier in selected_modifiers:
         if modifier in modifiers:
@@ -235,6 +245,8 @@ def calculate_penalties(violations, selected_modifiers):
         total_penalty = 0
 
     if total_penalty >= 75:
-        return f"пожизненное заключение"
+        return "Пожизненное заключение"
+    elif total_penalty == 5:
+        return "Предупреждение"
     else:
         return f"{total_penalty} минут"
