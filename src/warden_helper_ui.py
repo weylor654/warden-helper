@@ -226,11 +226,17 @@ class WardenHelper(QMainWindow):
         has_life_sentence = False
         has_death_penalty = False
         verdict = []
+        xx5_count = 0  # Счетчик статей категории XX5
 
         for code in article_codes:
             penalty_code = article_codes_to_penalties.get(code, "Неизвестный код")
+            
             if penalty_code == "XX5":
-                has_life_sentence = True
+                xx5_count += 1
+                if xx5_count >= 2:  # Если найдено 2 и более статьи категории XX5
+                    has_death_penalty = True
+                else:
+                    has_life_sentence = True  # Если одна статья XX5, отмечаем пожизненное заключение
             elif penalty_code == "XX6":
                 has_death_penalty = True
             else:
@@ -242,14 +248,19 @@ class WardenHelper(QMainWindow):
             for mod in self.modifier_selected:
                 total_minutes += modifiers.get(mod.text(), 0)
 
+        # Формируем вердикт
         if has_death_penalty:
             verdict.append("Высшая мера наказания")
         elif has_life_sentence or total_minutes >= 75:
             verdict.append("Пожизненное заключение")
+        elif total_minutes == 5:
+            verdict.append("Предупреждение")
         elif total_minutes > 0:
             verdict.append(f"{total_minutes} минут тюремного заключения")
 
         return ', '.join(verdict)
+
+
 
     def darken_color(self, hex_color, percent):
         """Утилита для затемнения цвета."""
